@@ -17,7 +17,7 @@ function loadGroup(groupId) {
   getWholeGroup(initialUrl, function(items) {
     redraw([{
       name: foodgroups[groupId],
-      nutrients: _(items).pluck("object")
+      foods: _(items).pluck("object")
     }]);
   });
 
@@ -41,8 +41,8 @@ function redraw(data) {
   var pack = d3.layout.pack()
       .size([w - 4, h - 4])
       .sort(null)
-      .value(function(d) { return d.amount; })
-      .children(function(d) {return d.nutrients;});
+      .value(getRdiFraction)
+      .children(getRdiChildren);
 
   var vis = d3.select("#main").append("svg:svg")
       .attr("width", w)
@@ -77,6 +77,28 @@ function redraw(data) {
     $('.'+curC).css({"fill-opacity":".7"});
     $('h2').text("");
   });
+
+  function getRdiChildren(parent) {
+    if (parent.foods) {
+      return _(parent.foods).filter(function(food) {
+        return rdiFiltered(food).length > 0;
+      });
+    } else if (parent.nutrients) {
+      return rdiFiltered(parent);
+    } else {
+      return undefined;
+    }
+  }
+
+  function rdiFiltered(food) {
+    return _(food.nutrients).filter(function(nut) {
+      return recommendations[nut.id];
+    });
+  }
+
+  function getRdiFraction(nut) {
+    return nut.amount/recommendations[nut.id]['rdi'];
+  }
 }
 
 // Initialize group changer
