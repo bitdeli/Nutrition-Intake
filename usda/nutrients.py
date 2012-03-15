@@ -1,5 +1,8 @@
+import os
 import csv
 import json
+
+from urllib2 import urlopen
 
 sources = {
     'food_groups': 'data/FD_GROUP.txt',
@@ -82,10 +85,19 @@ for food in _foods:
         'value':value,
     })
 
-# Save Foods by Group
+
+# Bitdeli data import
+BITDELI_INPUT = "i-04bb3fe3b92b1b-e31198a8"
+BITDELI_URL = "https://in.bitdeli.com/events/%s" % BITDELI_INPUT
+BITDELI_AUTH = os.environ['BITDELI_AUTH']
+
+def send_to_bitdeli(item, group_key):
+    event = json.dumps({'auth': BITDELI_AUTH,
+                        'group_key': group_key,
+                        'object': item})
+    print urlopen(BITDELI_URL, event).read()
+
+# Send all data
 for group in _foodgroups:
-    name = group['name'].lower().replace(' ', '_').replace(',', '')
-    f = open('json/groups/' + name + '.js', 'w' )
-    f.write('var foodgroups = foodgroups || {};\n')
-    f.write('foodgroups[' + group['id'] + ']=' + json.dumps(foodgroups[group['id']], separators = (',', ':')) + ';')
-    f.close()
+    for food in foodgroups[group['id']]['foods']:
+        send_to_bitdeli(food, group['id'])
